@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Kuch-Bhi.slnx",
+    "dotnet.defaultSolution": "Kuch Bhi.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
