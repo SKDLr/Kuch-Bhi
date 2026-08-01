@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c113f8293ec03488ac6c5df890c050, type: 3}
-  m_Name: HealthPotion
+  m_Name: Gun
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Health Potion
-  icon: {fileID: 21300000, guid: 29082288b421a19499ea8720171dbb58, type: 3}
-  description: Restores 50 HP
-  type: 2
-  isStackable: 1
-  maxStack: 10
-  worldPrefab: {fileID: 4312677275572573013, guid: 7a444dc77175c324993c17197139ef0e, type: 3}
+  itemName: 
+  icon: {fileID: 0}
+  description: 
+  type: 0
+  isStackable: 0
+  maxStack: 1
+  worldPrefab: {fileID: 0}
   holdOffset: {x: 0, y: 0, z: 0}
   holdRotation: {x: 0, y: 0, z: 0}
-  pickupPrompt: Press E
+  pickupPrompt: Press E to pick up

@@ -13,141 +13,89 @@ public class InventorySlot : MonoBehaviour,
     IDropHandler
 {
     [Header("UI References")]
-    public Image itemIcon;
+    public Image           itemIcon;
     public TextMeshProUGUI quantityText;
 
-    private InventoryItem _item;
-    private int _slotIndex;
-    private static InventorySlot _draggedFromSlot;
+    [Header("Colors")]
+    public Color normalColor = new Color(0.3f, 0.3f, 0.3f, 1f);
 
-    // ──────────────────────────────────────────────────────────────────────
+    private InventoryItem _item;
+    private int           _slotIndex;
+
+    // Static drag state
+    public static InventorySlot DragSource      = null;
+    public static ItemData      DragSourceItem  = null;
+    public static int           DragSourceIndex = -1;
+
     void Start()
     {
-        // Warn early if Inspector refs are missing
-        if (itemIcon == null)
-            Debug.LogError($"[InventorySlot] '{gameObject.name}' — itemIcon is NULL! " +
-                           "Assign the child Image (ItemIcon) in the Slot prefab Inspector.");
-
-        if (quantityText == null)
-            Debug.LogWarning($"[InventorySlot] '{gameObject.name}' — quantityText is NULL! " +
-                             "Assign the child TMP (QuantityText) in the Slot prefab Inspector.");
+        if (itemIcon == null)    Debug.LogError($"[InventorySlot] '{gameObject.name}' itemIcon NULL!");
+        if (quantityText == null) Debug.LogWarning($"[InventorySlot] '{gameObject.name}' quantityText NULL!");
     }
 
-    // ──────────────────────────────────────────────────────────────────────
     public void SetItem(InventoryItem item, int index)
     {
-        if (item == null)
-        {
-            Debug.LogWarning($"[InventorySlot] SetItem called with NULL item on slot {index}. Clearing.");
-            ClearSlot();
-            return;
-        }
+        if (item == null) { ClearSlot(); return; }
+        if (item.data == null) { Debug.LogError($"[InventorySlot] Slot {index} NULL data!"); return; }
 
-        if (item.data == null)
-        {
-            Debug.LogError($"[InventorySlot] Item at slot {index} has NULL ItemData! " +
-                           "The ScriptableObject reference may be broken.");
-            return;
-        }
-
-        _item = item;
+        _item      = item;
         _slotIndex = index;
 
-        itemIcon.sprite = _item.data.icon;
-        itemIcon.color  = Color.white;
+        itemIcon.sprite   = _item.data.icon;
+        itemIcon.color    = Color.white;
         quantityText.text = _item.quantity > 1 ? _item.quantity.ToString() : "";
-
-        if (_item.data.icon == null)
-            Debug.LogWarning($"[InventorySlot] Item '{_item.data.itemName}' has no icon sprite assigned. " +
-                             "The slot will appear blank.");
     }
 
-    // ──────────────────────────────────────────────────────────────────────
     public void ClearSlot()
     {
         _item = null;
-        if (itemIcon != null)
-        {
-            itemIcon.sprite = null;
-            itemIcon.color  = Color.clear;
-        }
-        if (quantityText != null)
-            quantityText.text = "";
+        if (itemIcon != null)    { itemIcon.sprite = null; itemIcon.color = Color.clear; }
+        if (quantityText != null)  quantityText.text = "";
+        GetComponent<Image>().color = normalColor;
     }
 
-    // ── Click ──────────────────────────────────────────────────────────────
+    // ── Right click — drop item in world ───────────────────────────────────
     public void OnPointerClick(PointerEventData eventData)
     {
         if (_item == null) return;
-
         if (eventData.button == PointerEventData.InputButton.Right)
         {
-            Debug.Log($"[InventorySlot] Right-clicked slot {_slotIndex} — removing one {_item.data.itemName}.");
-            InventoryManager.Instance.RemoveItem(_item.data);
+            Debug.Log($"[InventorySlot] Right-click drop: {_item.data.itemName}");
+            ItemDropper.Instance?.DropItem(_item.data);
         }
     }
 
-    // ── Tooltip ────────────────────────────────────────────────────────────
-    
-    
-    
+    // ── Tooltip + G key hover ──────────────────────────────────────────────
     public void OnPointerEnter(PointerEventData eventData)
-{
-    Debug.Log("[InventorySlot] OnPointerEnter fired. Item: " + (_item?.data?.itemName ?? "NULL"));
-
-    if (_item == null)
     {
-        Debug.Log("[InventorySlot] Slot is empty — no tooltip.");
-        return;
+        if (_item != null && ItemDropper.Instance != null)
+        {
+            ItemDropper.Instance.hoveredItem         = _item;
+            ItemDropper.Instance.hoveredHotbarIndex  = -1;
+        }
+        if (_item == null) return;
+        ItemTooltip.Instance?.Show(_item.data, GetComponent<RectTransform>());
     }
-
-    if (ItemTooltip.Instance == null)
-    {
-        Debug.LogError("[InventorySlot] ItemTooltip.Instance is NULL — Tooltip object is disabled or missing.");
-        return;
-    }
-
-    ItemTooltip.Instance.Show(_item.data, transform.position);
-}
-    
-    // public void OnPointerEnter(PointerEventData eventData)
-    // {
-    //     if (_item == null) return;
-
-    //     if (ItemTooltip.Instance == null)
-    //     {
-    //         Debug.LogWarning("[InventorySlot] ItemTooltip.Instance is NULL! " +
-    //                          "Make sure the Tooltip object has ItemTooltip.cs and is in the scene.");
-    //         return;
-    //     }
-
-    //     ItemTooltip.Instance.Show(_item.data, transform.position);
-    // }
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        if (ItemDropper.Instance != null) ItemDropper.Instance.hoveredItem = null;
         ItemTooltip.Instance?.Hide();
     }
 
     // ── Drag ───────────────────────────────────────────────────────────────
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (_item == null)
-        {
-            Debug.Log($"[InventorySlot] Drag started on empty slot {_slotIndex} — ignoring.");
-            return;
-        }
+        if (_item == null) return;
 
-        _draggedFromSlot = this;
-        Debug.Log($"[InventorySlot] Drag BEGIN — slot {_slotIndex} ({_item.data.itemName})");
+        DragSource      = this;
+        DragSourceItem  = _item.data;
+        DragSourceIndex = _slotIndex;
 
-        if (DragIcon.Instance == null)
-            Debug.LogWarning("[InventorySlot] DragIcon.Instance is NULL! " +
-                             "Make sure the DragIcon object has DragIcon.cs and is in the Canvas.");
-        else
-            DragIcon.Instance.Show(_item.data.icon);
-
+        Debug.Log($"[InventorySlot] Drag BEGIN slot {_slotIndex}: {_item.data.itemName}");
+        DragIcon.Instance?.Show(_item.data.icon);
         itemIcon.color = new Color(1, 1, 1, 0.4f);
+        ItemTooltip.Instance?.Hide();
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -157,33 +105,53 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log($"[InventorySlot] Drag END — slot {_slotIndex}");
         DragIcon.Instance?.Hide();
+        if (_item != null) itemIcon.color = Color.white;
 
-        if (_item != null)
-            itemIcon.color = Color.white;
+        // Only world-drop if DragSourceItem wasn't consumed by a hotbar slot
+        if (eventData.pointerEnter == null && DragSourceItem != null)
+        {
+            Debug.Log("[InventorySlot] Dropped outside UI — world drop.");
+            ItemDropper.Instance?.DropItem(DragSourceItem);
+        }
 
-        _draggedFromSlot = null;
+        DragSource      = null;
+        DragSourceItem  = null;
+        DragSourceIndex = -1;
     }
 
-    // ── Drop ───────────────────────────────────────────────────────────────
+    // ── Drop — accept from hotbar back into inventory ──────────────────────
     public void OnDrop(PointerEventData eventData)
     {
-        if (_draggedFromSlot == null)
+        // From another inventory slot — swap
+        if (InventorySlot.DragSource != null && InventorySlot.DragSource != this)
         {
-            Debug.LogWarning("[InventorySlot] OnDrop — no drag source found. Was OnBeginDrag missed?");
+            Debug.Log($"[InventorySlot] Swap inv {DragSourceIndex} <-> {_slotIndex}");
+            InventoryManager.Instance.SwapSlots(DragSourceIndex, _slotIndex);
             return;
         }
 
-        if (_draggedFromSlot == this)
+        // From a hotbar slot — return to inventory at this position
+        if (HotbarSlotUI.DragSource != null)
         {
-            Debug.Log("[InventorySlot] Dropped onto the same slot — no swap needed.");
-            return;
+            int hotbarIdx = HotbarSlotUI.DragSourceIndex;
+            InventoryItem hotbarItem = HotbarManager.Instance?.GetSlot(hotbarIdx);
+            if (hotbarItem == null) return;
+
+            // Return to inventory
+            bool returned = HotbarManager.Instance.ReturnToInventory(hotbarIdx);
+            if (returned)
+            {
+                // Move it to the specific slot position dropped on
+                int newPos = InventoryManager.Instance.items.Count - 1;
+                if (_slotIndex < newPos)
+                    InventoryManager.Instance.SwapSlots(newPos, _slotIndex);
+
+                // Consume drag so OnEndDrag doesn't world drop
+                HotbarSlotUI.DragSource      = null;
+                HotbarSlotUI.DragSourceIndex = -1;
+                Debug.Log($"[InventorySlot] Moved hotbar item back to inventory slot {_slotIndex}.");
+            }
         }
-
-        Debug.Log($"[InventorySlot] DROP — swapping slot {_draggedFromSlot._slotIndex} " +
-                  $"with slot {_slotIndex}");
-
-        InventoryManager.Instance.SwapSlots(_draggedFromSlot._slotIndex, _slotIndex);
     }
 }

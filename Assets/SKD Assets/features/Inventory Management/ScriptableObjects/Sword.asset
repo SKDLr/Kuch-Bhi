@@ -18,3 +18,7 @@ MonoBehaviour:
   type: 0
   isStackable: 0
   maxStack: 1
+  worldPrefab: {fileID: 8961685184734374062, guid: 9e90d38ff4b55294c8dc00ff2423cbaa, type: 3}
+  holdOffset: {x: 0.25, y: 0.27, z: 0.13}
+  holdRotation: {x: 0, y: 0, z: 0}
+  pickupPrompt: Press E to Pickup

@@ -16,4 +16,14 @@ public class ItemData : ScriptableObject
     [Header("Stacking")]
     public bool isStackable;
     public int maxStack = 1;
+
+    [Header("World Prefab")]
+    public GameObject worldPrefab;
+
+    [Header("Hold Position — tweak per item in play mode")]
+    public Vector3 holdOffset   = Vector3.zero;
+    public Vector3 holdRotation = Vector3.zero;
+
+    [Header("Pickup Prompt — shown when player is near")]
+    public string pickupPrompt = "Press E to pick up";
 }

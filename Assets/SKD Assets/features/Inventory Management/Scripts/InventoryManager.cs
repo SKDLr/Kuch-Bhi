@@ -162,6 +162,14 @@ public class InventoryManager : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────────────────────────────
+    // Public wrapper so outside classes can fire OnInventoryChanged without direct event access
+    public void NotifyInventoryChanged()
+    {
+        Debug.Log("[InventoryManager] NotifyInventoryChanged called.");
+        OnInventoryChanged?.Invoke();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
     public bool HasItem(ItemData data)
     {
         if (data == null)
@@ -189,9 +197,6 @@ public class InventoryManager : MonoBehaviour
         Debug.Log("[InventoryManager] =============================================");
     }
 }
-
-
-
 
 
 
