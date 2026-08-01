@@ -22,3 +22,4 @@ MonoBehaviour:
   holdOffset: {x: 0, y: 0, z: 0}
   holdRotation: {x: 0, y: 0, z: 0}
   pickupPrompt: Press E
+  healAmount: 30

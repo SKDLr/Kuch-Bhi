@@ -26,4 +26,7 @@ public class ItemData : ScriptableObject
 
     [Header("Pickup Prompt — shown when player is near")]
     public string pickupPrompt = "Press E to pick up";
+
+    [Header("Consumable Stats")]
+    public float healAmount = 0f;   // HP restored when consumed (0 = no heal)
 }

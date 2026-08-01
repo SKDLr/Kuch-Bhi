@@ -66,10 +66,25 @@ public class ItemUsageHandler : MonoBehaviour
     {
         Debug.Log($"[ItemUsageHandler] Consuming {item.data.itemName}. Stack before: {item.quantity}");
 
-        // ── Plug your health/effect logic in here ──────────────────────────
-        // Example (uncomment when you have a health system):
-        // PlayerHealth.Instance?.Heal(item.data.healAmount);
-        // PlayerStats.Instance?.AddBuff(item.data.buff);
+        // ── Health restore ─────────────────────────────────────────────────
+        if (item.data.healAmount > 0f)
+        {
+            if (PlayerHealth.Instance != null)
+            {
+                PlayerHealth.Instance.Heal(item.data.healAmount);
+                Debug.Log($"[ItemUsageHandler] Healed {item.data.healAmount} HP from {item.data.itemName}.");
+            }
+            else
+            {
+                Debug.LogWarning("[ItemUsageHandler] PlayerHealth.Instance is NULL — " +
+                                 "make sure PlayerHealth.cs is on the Player.");
+            }
+        }
+        else
+        {
+            Debug.Log($"[ItemUsageHandler] {item.data.itemName} consumed but healAmount is 0. " +
+                      "Set Heal Amount in the ItemData Inspector.");
+        }
         // ──────────────────────────────────────────────────────────────────
 
         // Decrement stack by 1
